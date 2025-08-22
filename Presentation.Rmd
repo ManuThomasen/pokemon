@@ -1,0 +1,48 @@
+---
+title: "Pokémon Presentation"
+output: ioslides_presentation
+runtime: shiny
+---
+
+## Data
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+library(pokemon)
+library(dplyr)
+glimpse(pokemon)
+```
+
+
+## Sunburst Chart
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+# Source your app quietly
+  library(pokemon)
+  source("manuel/sunburst.R")
+
+# run plot
+p
+
+
+``` 
+
+## Radar Comparison App
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+setwd("C:/pokemon/Kristoffer")
+
+# Source your app quietly
+suppressMessages({
+  source("Rader_shiny_2.R")
+})
+# Run the app inline
+shinyApp(ui, server)
+```
+
+## Who's that Pokemon
+```{r shiny, eval=TRUE, echo=FALSE, warning=FALSE}
+suppressMessages({
+  source("manuel/wtp shiny.R")
+})
+shinyApp(ui, server)
+```
