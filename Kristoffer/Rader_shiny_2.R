@@ -258,5 +258,3 @@ server <- function(input, output, session) {
   output$infoB <- renderUI(render_info_panel(oneB()))
 }
 
-# ---- Run ---------------------------------------------------------------
-shinyApp(ui, server)
