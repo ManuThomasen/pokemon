@@ -1,0 +1,28 @@
+---
+title: "presentation"
+output: ioslides_presentation
+date: "2025-08-22"
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## shiny
+
+```{r shiny, eval=TRUE, echo=FALSE, warning=FALSE}
+suppressMessages({
+  source("wtp shiny.R")
+})
+shinyApp(ui, server)
+```
+
+## sunburst
+
+```{r sunburst, eval=TRUE, echo=FALSE, warning=FALSE}
+suppressMessages({
+  source("sunburst.R")
+})
+p
+```
