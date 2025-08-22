@@ -26,9 +26,7 @@ silhouette <- image_composite(black, img, operator = "copy_opacity")
 sil_path <- file.path(tempdir(), "pokemon_silhouette.png")
 image_write(silhouette, sil_path)
 
-# 3) Path/URL to the classic WTP background (provide your file here)
-# Example: bg_path <- "wtp_background.png"
-# (You can download any WTP background PNG and point to it locally.)
+# 3) Path/URL to the classic WTP background 
 bg_path <- "wtp_background.png"
 
 # 4) Build the plot in a [0,1] x [0,1] canvas for easy positioning

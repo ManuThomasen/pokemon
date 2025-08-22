@@ -80,14 +80,14 @@ build_plot <- function(bg_uri, pok_uri, label = NULL, reveal = FALSE) {
   if (isTRUE(reveal) && !is.null(label)) {
     p <- p %>% layout(annotations = list(# Outline
       list(
-        x = 0.75, y = 0.90,
+        x = 0.50, y = 0.90,
         text = label,
         showarrow = FALSE,
         font = list(size = 103, color = "yellow")  # slightly larger, background color
       ),
       # Main text
       list(
-        x = 0.75, y = 0.90,
+        x = 0.50, y = 0.90,
         text = label,
         showarrow = FALSE,
         font = list(size = 100, color = "#1e3a8a")  # main color
@@ -157,5 +157,3 @@ server <- function(input, output, session) {
       config(displayModeBar = FALSE)
   })
 }
-
-shinyApp(ui, server)
