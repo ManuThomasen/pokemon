@@ -12,6 +12,16 @@ library(dplyr)
 glimpse(pokemon)
 ```
 
+## Pokemon stats
+```{r echo=FALSE, fig.height=4.5, fig.width=8.8, message=FALSE, warning=FALSE}
+  library(pokemon)
+  source("Malene/Figur script.R")
+
+  p
+
+``` 
+
+
 
 ## Sunburst Chart
 
@@ -45,4 +55,36 @@ suppressMessages({
   source("manuel/wtp shiny.R")
 })
 shinyApp(ui, server)
+```
+
+## Code
+```{r, eval=FALSE, echo=TRUE, warning=FALSE}
+
+ggplot() +
+  # Background stretched to fill the panel
+  geom_image(data = df_bg, aes(x, y, image = image), size = 1) +
+  # Silhouette on top (left side); adjust 'size' to scale
+  geom_image(data = df_pok_sil, aes(x, y, image = image), size = 0.3) +
+  coord_fixed(xlim = c(0, 1), ylim = c(0, 1), expand = FALSE) +
+  theme_void()
+
+```
+
+## Code continue
+```{r, eval=FALSE, echo=TRUE, warning=FALSE}
+ggplot() +
+  # Background stretched to fill the panel
+  geom_image(data = df_bg, aes(x, y, image = image), size = 1) +
+  # Silhouette on top (left side); adjust 'size' to scale
+  geom_image(data = df_pok, aes(x, y, image = image), size = 0.3) +
+  geom_text(data = df_label, aes(x, y, label = label),
+            family = "pokemon_hollow",
+            colour = "blue",     # fill inside letters
+            size = 12) +
+  geom_text(data = df_label, aes(x, y, label = label),
+            family = "pokemon_solid",
+            colour = "yellow",     # fill inside letters
+            size = 12) +
+  coord_fixed(xlim = c(0, 1), ylim = c(0, 1), expand = FALSE) +
+  theme_void()
 ```
