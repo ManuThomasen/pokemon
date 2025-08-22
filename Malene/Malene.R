@@ -1,6 +1,6 @@
 # Clean data provided by https://github.com/williamorim/pokemon. No cleaning was necessary.
 
-# install.packages("pokemon")
+install.packages("pokemon")
 pokemon_df <- pokemon::pokemon
 
 library(tidyverse)
@@ -81,7 +81,7 @@ pokemon_df %>%
 ### 
 top_attack <- pokemon_df %>%
   group_by(type_1) %>%
-  slice_max(order_by = attack, defense, special_attack, speciel_defence, n = 1, with_ties = FALSE) %>%
+  slice_max(order_by = attack, n = 1, with_ties = FALSE) %>%
   ungroup()
 
 # Horizontal bar plot
@@ -97,181 +97,445 @@ ggplot(top_attack, aes(x = reorder(pokemon, attack), y = attack, fill = type_1))
   ) +
   theme_minimal()
 
-top_attack <- pokemon %>%
+library(dplyr)
+library(ggplot2)
+
+# get top pokemon per type
+top_attack <- pokemon_df %>%
   group_by(type_1) %>%
-  slice_max(order_by = attack, n = 5, with_ties = FALSE) %>%
+  slice_max(order_by = attack, n = 1, with_ties = FALSE) %>%
   ungroup()
 
-# Horizontal bar plot
-ggplot(top_attack, aes(x = reorder(Name, attack), y = attack, fill = type_1)) +
-  geom_col() +
-  coord_flip() +  # makes it horizontal
-  facet_wrap(~ type_1, scales = "free_y") +  # separate panel per type
+# Plot with horizontal lines instead of bars
+ggplot(top_attack, aes(x = reorder(pokemon, attack), y = attack, colour = type_1)) +
+  geom_segment(aes(xend = pokemon, y = 0, yend = attack), linewidth = 1.2) +
+  geom_point(size = 3) +
+  coord_flip() +
+  facet_wrap(~ type_1, scales = "free_y") +
   labs(
-    title = "Top 5 Pokémon by Attack for Each Type",
+    title = "Highest Attack Pokémon in Each Type",
     x = "Pokémon",
     y = "Attack",
-    fill = "Type"
+    colour = "Type"
   ) +
   theme_minimal()
 
-?geom_violine
-pokemon_df %>%
-  filter(!is.na(type_2)) %>%
-  count(type_1, type_2) %>%
-  ggplot(aes(x = type_1, y = type_2, fill = n)) +
-  geom_line() +
-  scale_fill_viridis_c() +
+# Get top Pokémon per type (highest attack)
+top_pokemon <- pokemon_df %>%
+  group_by(type_1) %>%
+  slice_max(order_by = attack, n = 1, with_ties = FALSE) %>%
+  ungroup()
+
+# Reshape the data: pick only relevant stats
+top_pokemon_long <- top_pokemon %>%
+  select(pokemon, type_1, attack, defense, special_attack, special_defense) %>%
+  pivot_longer(
+    cols = c(attack, defense, special_attack, special_defense),
+    names_to = "stat",
+    values_to = "value"
+  )
+
+# Plot: horizontal lines for each stat
+ggplot(top_pokemon_long, aes(x = stat, y = value, colour = stat, group = stat)) +
+  geom_segment(aes(xend = stat, y = 0, yend = value), linewidth = 1.2) +
+  geom_point(size = 3) +
+  coord_flip() +
+  facet_wrap(~ type_1, scales = "free_y") +
+  labs(
+    title = "Key Stats of Highest-Attack Pokémon in Each Type",
+    x = "Stat",
+    y = "Value",
+    colour = "Stat"
+  ) +
+  theme_minimal()
+
+# Get top Pokémon per type
+top_pokemon <- pokemon_df %>%
+  group_by(type_1) %>%
+  slice_max(order_by = attack, n = 1, with_ties = FALSE) %>%
+  ungroup()
+
+# Reshape to long format
+top_pokemon_long <- top_pokemon %>%
+  select(pokemon, type_1, attack, defense, special_attack, special_defense) %>%
+  pivot_longer(
+    cols = c(attack, defense, special_attack, special_defense),
+    names_to = "stat",
+    values_to = "value"
+  )
+
+top_pokemon <- pokemon_df %>%
+  group_by(type_1) %>%
+  slice_max(order_by = attack, n = 1, with_ties = FALSE) %>%
+  ungroup()
+
+# Reshape to long format
+top_pokemon_long <- top_pokemon %>%
+  select(pokemon, type_1, attack, defense, special_attack, special_defense) %>%
+  pivot_longer(
+    cols = c(attack, defense, special_attack, special_defense),
+    names_to = "stat",
+    values_to = "value"
+  )
+
+# Plot
+ggplot(top_pokemon_long, aes(x = stat, y = value, colour = stat, group = stat)) +
+  geom_segment(aes(xend = stat, y = 0, yend = value), linewidth = 1.2) +
+  geom_point(size = 3) +
+  geom_text(aes(label = pokemon), hjust = -0.2, vjust = 0.5, colour = "black") +
+  coord_flip() +
+  facet_wrap(~ type_1, scales = "free_y") +
+  labs(
+    title = "Key Stats of Highest-Attack Pokémon in Each Type",
+    x = "Stat",
+    y = "Value",
+    colour = "Stat"
+  ) +
   theme_minimal() +
-  labs(title = "Common type combinations")
+  theme(
+    strip.text = element_text(face = "bold", size = 10) # clearer type labels
+  )
 
-library(ggplot2)
-library(dplyr)
 
-pokemon_stats <- pokemon_df %>%
-  mutate(total_stats = hp + attack + defense + special_attack + special_defense + speed) %>%
-  filter(!is.na(height), !is.na(weight), !is.na(type_1))
-
-ggplot(pokemon_stats, aes(x = height, y = weight, 
-                          color = type_1, size = total_stats)) +
-  geom_point(alpha = 0.7) +
-  scale_size_continuous(range = c(2, 10)) +  # adjust point size range
+# Plot
+ggplot(top_pokemon_long, aes(x = value, y = reorder(pokemon, value), colour = stat)) +
+  geom_segment(aes(x = 0, xend = value, yend = pokemon), linewidth = 1) +
+  geom_point(size = 3) +
   labs(
-    x = "Height",
-    y = "Weight",
-    color = "Primary type",
-    size = "Total stats"
+    title = "Stat Profiles of Highest-Attack Pokémon per Type",
+    x = "Stat Value",
+    y = "Pokémon",
+    colour = "Stat"
   ) +
-  theme_minimal(base_size = 14)
-
-pokemon_df %>%
-  pivot_longer(cols = c(egg_group_1, egg_group_2),
-               names_to = "slot", values_to = "egg_group") %>%
-  filter(!is.na(egg_group)) %>%
-  count(egg_group, type_1) %>%
-  ggplot(aes(x = type_1, y = egg_group, fill = n)) +
-  geom_tile() +
-  scale_fill_viridis_c() +
-  labs(title = "Primary Type by Egg Group",
-       x = "Primary Type", y = "Egg Group") +
   theme_minimal()
 
-pokemon_df %>%
-  pivot_longer(cols = c(egg_group_1, egg_group_2),
-               names_to = "slot", values_to = "egg_group") %>%
-  filter(!is.na(egg_group)) %>%
-  count(egg_group, type_1) %>%
-  ggplot(aes(x = type_1, y = egg_group, fill = n)) +
-  geom_tile() +
-  scale_fill_viridis_c() +
-  labs(title = "Primary Type by Egg Group",
-       x = "Primary Type", y = "Egg Group") +
-  theme_minimal()
+top_pokemon <- pokemon_df %>%
+  group_by(type_1) %>%
+  slice_max(order_by = attack, n = 1, with_ties = FALSE) %>%
+  ungroup()
 
-pokemon_stats <- pokemon %>% 
-  filter(!is.na(type_1))
+# Reshape to long format
+top_pokemon_long <- top_pokemon %>%
+  select(pokemon, type_1, attack, defense, sp_attack, sp_defense) %>%
+  pivot_longer(
+    cols = c(attack, defense, sp_attack, sp_defense),
+    names_to = "stat",
+    values_to = "value"
+  )
 
-ggplot(pokemon_stats, aes(x = attack, y = defense, color = type_1)) +
-  geom_point(alpha = 0.7, size = 3) +
-  scale_color_brewer(palette = "Set2") +
-  labs(
-    title = "Stat Trade-off: Attack vs Defence",
-    x = "Attack",
-    y = "Defence",
-    color = "Primary Type"
+# Plot
+ggplot(top_pokemon_long, aes(x = value, y = stat, colour = stat)) +
+  geom_segment(aes(x = 0, xend = value, yend = stat), linewidth = 1) +
+  geom_point(size = 3) +
+  # add pokemon name on the left side, once per facet
+  geom_text(
+    data = top_pokemon, 
+    aes(x = 0, y = 0.5, label = pokemon), 
+    inherit.aes = FALSE,
+    hjust = 1.1, vjust = 0.5,
+    colour = "black", fontface = "bold"
   ) +
-  theme_minimal(base_size = 14)
-
-ggplot(pokemon_stats, aes(x = speed, y = hp, color = type_1)) +
-  geom_point(alpha = 0.7, size = 3) +
-  scale_color_brewer(palette = "Dark2") +
+  facet_wrap(~ type_1, scales = "free_y") +
   labs(
-    title = "Stat Trade-off: Speed vs HP",
-    x = "Speed",
-    y = "HP",
-    color = "Primary Type"
+    title = "Key Stats of Highest-Attack Pokémon in Each Type",
+    x = "Value",
+    y = NULL,
+    colour = "Stat"
   ) +
-  stat_ellipse(type = "norm", linetype = 2) +
-  facet_wrap(~generation_id) +
-  theme_minimal(base_size = 14)
+  theme_minimal() +
+  theme(
+    strip.text = element_text(face = "bold", size = 10)
+  )
 
-pokemon_eggs <- pokemon_df %>%
-  pivot_longer(cols = c(egg_group_1, egg_group_2),
-               names_to = "slot", values_to = "egg_group") %>%
-  filter(!is.na(egg_group))
+### 
+# Get top Pokémon per type
+top_pokemon <- pokemon_df %>%
+  group_by(type_1) %>%
+  slice_max(order_by = attack, n = 1, with_ties = FALSE) %>%
+  ungroup()
 
-ggplot(pokemon_eggs, aes(x = speed, y = hp, color = egg_group)) +
-  geom_point(alpha = 0.7, size = 3) +
+# Reshape to long format
+top_pokemon_long <- top_pokemon %>%
+  select(pokemon, type_1, attack, defense, special_attack, special_defense) %>%
+  pivot_longer(
+    cols = c(attack, defense, special_attack, special_defense),
+    names_to = "stat",
+    values_to = "value"
+  )
+
+# Plot
+ggplot(top_pokemon_long, aes(x = value, y = stat, colour = stat)) +
+  geom_segment(aes(x = 0, xend = value, yend = stat), linewidth = 1) +
+  geom_point(size = 3) +
+  # add pokemon name on the left side, once per facet
+  geom_text(
+    data = top_pokemon, 
+    aes(x = 0, y = 0.5, label = pokemon), 
+    inherit.aes = FALSE,
+    hjust = 1.1, vjust = 0.5,
+    colour = "black", fontface = "bold"
+  ) +
+  facet_wrap(~ type_1, scales = "free_y") +
   labs(
-    title = "Stat Trade-off: Speed vs HP by Egg Group",
-    x = "Speed",
-    y = "HP",
-    color = "Egg Group"
+    title = "Key Stats of Highest-Attack Pokémon in Each Type",
+    x = "Value",
+    y = NULL,
+    colour = "Stat"
   ) +
-  stat_ellipse(type = "norm", linetype = 2) +
-  facet_wrap(~generation_id) +
-  theme_minimal(base_size = 14)
+  theme_minimal() +
+  theme(
+    strip.text = element_text(face = "bold", size = 10)
+  )
 
+###
+top_pokemon <- pokemon_df %>%
+  group_by(type_1) %>%
+  slice_max(order_by = attack, n = 1, with_ties = FALSE) %>%
+  ungroup()
 
-# 📦 fit model
-mod <- lm(hp ~ height + weight + base_experience + defense + attack + speed,
-          data = pokemon_df)
+# Reshape to long format
+top_pokemon_long <- top_pokemon %>%
+  select(pokemon, type_1, attack, defense, special_attack, special_defense) %>%
+  pivot_longer(
+    cols = c(attack, defense, special_attack, special_defense),
+    names_to = "stat",
+    values_to = "value"
+  )
 
-# 📊 collect predicted + residuals
-df_mod <- tibble(
-  id = pokemon_df$id,
-  pokemon = pokemon_df$pokemon,
-  y = pokemon_df$hp,
-  y_hat = fitted.values(mod),
-  res = residuals(mod)
-) |>
-  mutate(rank = rank(-res)) |>   # large residuals first
-  filter(rank <= 16)             # keep top 16 Pokémon
-
-# 🖼️ plot predicted vs actual
-ggplot(df_mod, aes(x = y_hat, y = y)) +
-  geom_point(data = tibble(
-    y = pokemon_df$hp,
-    y_hat = fitted.values(mod)
-  ), aes(x = y_hat, y = y), alpha = 0.3, colour = "grey40") +
-  geom_smooth(method = "lm", se = FALSE, colour = "steelblue") +
-  geom_point(colour = "red", size = 3) +
-  ggrepel::geom_text_repel(aes(label = pokemon), colour = "red") +
+# Plot
+ggplot(top_pokemon_long, aes(x = value, y = stat, colour = stat)) +
+  geom_segment(aes(x = 0, xend = value, yend = stat), linewidth = 1) +
+  geom_point(size = 3) +
+  # add pokemon name once per facet, on the left
+  geom_text(
+    data = top_pokemon,
+    aes(x = -20, y = 2.5, label = pokemon),   # fixed y = middle of stats
+    inherit.aes = FALSE,
+    hjust = 1, colour = "black", fontface = "bold"
+  ) +
+  facet_wrap(~ type_1, scales = "free_y") +
   labs(
-    title = "Pokémon with Unexpectedly High HP",
-    subtitle = "Top 16 Pokémon with the largest positive residuals (actual HP > predicted HP)",
-    x = "Predicted HP",
-    y = "Actual HP"
+    title = "Key Stats of Highest-Attack Pokémon in Each Type",
+    x = "Value",
+    y = NULL,
+    colour = "Stat"
   ) +
-  theme_minimal(base_size = 14)
+  theme_minimal() +
+  theme(
+    strip.text = element_text(face = "bold", size = 10)
+  )
 
-library(tidyverse)
-library(ggrepel)
+###
+top_pokemon <- pokemon_df %>%
+  group_by(type_1) %>%
+  slice_max(order_by = attack, n = 1, with_ties = FALSE) %>%
+  ungroup()
 
-# 1. Fit model
-mod <- lm(hp ~ height + weight + base_experience + defense + attack + speed,
-          data = pokemon_df)
+# Reshape to long format
+top_pokemon_long <- top_pokemon %>%
+  select(pokemon, type_1, attack, defense, special_attack, special_defense) %>%
+  pivot_longer(
+    cols = c(attack, defense, special_attack, special_defense),
+    names_to = "stat",
+    values_to = "value"
+  )
 
-# 2. Extract predictions and residuals
-df_mod <- pokemon_df |>
+# Plot
+ggplot(top_pokemon_long, aes(x = value, y = stat, colour = stat)) +
+  geom_segment(aes(x = 0, xend = value, yend = stat), linewidth = 1) +
+  geom_point(size = 3) +
+  # add stat labels on the right side of each line
+  geom_text(aes(x = value + 5, y = stat, label = stat),
+            inherit.aes = FALSE, colour = "black", hjust = 0) +
+  # add pokemon name once per facet, on the left
+  geom_text(
+    data = top_pokemon,
+    aes(x = -20, y = 2.5, label = pokemon),
+    inherit.aes = FALSE,
+    hjust = 1, colour = "black", fontface = "bold"
+  ) +
+  facet_wrap(~ type_1) +
+  labs(
+    title = "Key Stats of Highest-Attack Pokémon in Each Type",
+    x = "Value",
+    y = NULL,
+    colour = "Stat"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_blank(),   # remove default stat labels on y-axis
+    axis.ticks.y = element_blank(),
+    strip.text = element_text(face = "bold", size = 10)
+  )
+
+###
+top_pokemon <- pokemon_df %>%
+  group_by(type_1) %>%
+  slice_max(order_by = attack, n = 1, with_ties = FALSE) %>%
+  ungroup()
+
+# Reshape to long format
+top_pokemon_long <- top_pokemon %>%
+  select(pokemon, type_1, attack, defense, special_attack, special_defense) %>%
+  pivot_longer(
+    cols = c(attack, defense, special_attack, special_defense),
+    names_to = "stat",
+    values_to = "value"
+  )
+
+# Plot
+ggplot(top_pokemon_long, aes(x = value, y = stat, colour = stat)) +
+  geom_segment(aes(x = 0, xend = value, yend = stat), linewidth = 1) +
+  geom_point(size = 3) +
+  # add pokemon name once per facet (left side)
+  geom_text(
+    data = top_pokemon,
+    aes(x = -20, y = 2.5, label = pokemon),  # y=2.5 ~ middle of 4 stats
+    inherit.aes = FALSE,
+    hjust = 1, colour = "black", fontface = "bold"
+  ) +
+  facet_wrap(~ type_1) +
+  labs(
+    title = "Key Stats of Highest-Attack Pokémon in Each Type",
+    x = "Value",
+    y = NULL,
+    colour = "Stat"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.margin = margin(10, 10, 10, 80),  # increase left margin
+    axis.text.y = element_blank(),   # remove stat labels
+    axis.ticks.y = element_blank(),
+    strip.text = element_text(face = "bold", size = 10),
+    legend.position = "right",# keep one legend for the whole plot
+  )
+
+top_pokemon_long <- top_pokemon_long %>%
+  mutate(facet_label = paste0(pokemon, " (", type_1, ")"))
+
+ggplot(top_pokemon_long, aes(x = value, y = stat, colour = stat)) +
+  geom_segment(aes(x = 0, xend = value, yend = stat), linewidth = 1) +
+  geom_point(size = 3) +
+  facet_wrap(~ facet_label) +
+  labs(
+    title = "Key Stats of Highest-Attack Pokémon in Each Type",
+    x = "Value",
+    y = NULL,
+    colour = "Stat"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    strip.text = element_text(face = "bold", size = 10),
+    legend.position = "right"
+  )
+
+install.packages("ggimage")
+library(ggimage)
+
+top_pokemon <- pokemon_df %>%
+  group_by(type_1) %>%
+  slice_max(order_by = attack, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
   mutate(
-    y_hat = fitted(mod),
-    res   = resid(mod),
-    rank  = rank(-res)   # order by positive residual
-  ) |>
-  filter(rank <= 16)     # top 16 biggest HP-surprises
+    x = -30,       # horizontal position for image
+    y = 2.5        # vertical centre of stats
+  )
 
-# 3. Scatterplot of predicted vs actual HP
-ggplot(pokemon_df, aes(x = fitted(mod), y = hp)) +
-  geom_point(alpha = 0.3, colour = "grey50") +
-  geom_smooth(method = "lm", se = FALSE, colour = "steelblue") +
-  geom_point(data = df_mod, aes(x = y_hat, y = hp), colour = "red", size = 3) +
-  geom_text_repel(data = df_mod, aes(x = y_hat, y = hp, label = pokemon),
-                  colour = "red", size = 3.5) +
-  labs(
-    title = "Pokémon with Unexpectedly High HP",
-    subtitle = "Top 16 Pokémon with the largest positive residuals (actual HP > predicted HP)",
-    x = "Predicted HP",
-    y = "Actual HP"
+# 2. Reshape stats for plotting
+top_pokemon_long <- top_pokemon %>%
+  select(pokemon, type_1, attack, defense, special_attack, special_defense, url_icon) %>%
+  pivot_longer(
+    cols = attack:special_defense,
+    names_to = "stat",
+    values_to = "value"
+  )
+
+# 3. Plot with images
+ggplot(top_pokemon_long, aes(x = value, y = stat, colour = stat)) +
+  geom_segment(aes(x = 0, xend = value, yend = stat), linewidth = 1) +
+  geom_point(size = 3) +
+  geom_image(
+    data = top_pokemon,
+    aes(x = x, y = y, image = url_icon),
+    inherit.aes = FALSE,
+    size = 0.1
   ) +
-  theme_minimal(base_size = 14)
+  facet_wrap(~ type_1) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    strip.text = element_text(face = "bold", size = 10),
+    plot.margin = margin(10, 10, 10, 60)
+  )
+
+### 
+
+# Reshape stats to long format
+top_pokemon <- pokemon_df %>%
+  filter(generation_id == 1) %>%
+  group_by(type_1) %>%
+  slice_max(order_by = attack, n = 1, with_ties = FALSE) %>%
+  ungroup()
+
+
+# Reshape stats for plotting
+top_pokemon_long <- top_pokemon %>%
+  select(pokemon, type_1, attack, defense, special_attack, special_defense) %>%
+  pivot_longer(
+    cols = attack:special_defense,
+    names_to = "stat",
+    values_to = "value"
+  )
+
+# Add coordinates for the image (one row per Pokémon)
+top_pokemon_images <- top_pokemon %>%
+    mutate(
+      facet_label = paste0(pokemon, " (", type_1, ")"),
+      x = -50,  # horizontal position for images
+      y = mean(seq_along(c("attack", "defense", "special_attack", "special_defense"))) # mean of the stat positions (auto-centred)
+    )
+
+# Merge facet_label into long data
+top_pokemon_long <- top_pokemon_long %>%
+    left_join(
+    top_pokemon_images %>% select(pokemon, facet_label),
+    by = "pokemon"
+    )
+
+# 4. Plot
+ggplot(top_pokemon_long, aes(x = value, y = stat, colour = stat)) +
+  geom_segment(aes(x = 0, xend = value, yend = stat), linewidth = 1) +
+  geom_point(aes(x = value, y = stat), size = 3) +
+  geom_image(
+    data = top_pokemon_images,
+    aes(x = x, y = y, image = url_image),
+    inherit.aes = FALSE,
+    size = 1.0
+  ) +
+  facet_wrap(~ facet_label) +
+  expand_limits(x = -90) +
+  theme_minimal() +
+  labs(
+    title = "Key stats of highest-attack pokemon in each type",
+    y = NULL,
+    colour = "Stat") +
+  scale_colour_manual(values = c(
+    attack = "#E63946",         # red
+    defense = "#457B9D",        # blue
+    special_attack = "#F1FA3C", # yellow
+    special_defense = "#2A9D8F" # green
+  )) +
+  theme(
+    panel.grid = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.ticks.x = element_blank(),
+    strip.text = element_text(face = "bold", size = 10),
+    plot.margin = margin(10, 10, 10, 60) # give space for the icons
+  )
+
+####
